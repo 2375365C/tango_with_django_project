@@ -24,10 +24,16 @@
 			<strong>There are no categories present.</strong>
 		{% endif %}
 		</div>
+		<div>
+			{% if pages %}
+				{}
+			{% endif %}
+		</div>
 		
 		<div>
 			<a href="/rango/about/">About Rango</a><br />
+			<a href="/rango/add_category/">Add a New Category</a><br />
 			<img src="{% static 'images/rango.jpg' %}" alt="Picture of Rango" />
-		34 </div>
+		</div>
 	</body>
 </html>
