@@ -5,6 +5,7 @@
 </head>
 
 <body>
+	<a href="/rango/">Homepage</a><br />
 	<div>
 	{% if category %}
 		<h1>{{ category.name }}</h1>
@@ -18,7 +19,7 @@
 		{% else %}
 			<strong>No pages currently in category.</strong>
 		{% endif %}
-		
+
 		<a href="/rango/category/{{ category.slug }}/add_page/">Add Page</a> <br/>
 
 	{% else %}
