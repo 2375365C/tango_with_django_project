@@ -6,6 +6,35 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from datetime import datetime
+
+# helper method to get cookies from the server
+def get_server_side_cookie(request, cookie, default_val=None):
+	val = request.session.get(cookie)
+	if not val:
+		val = default_val
+	return val
+
+# cookie handling helper method
+def visitor_cookie_handler(request):
+	# Get the number of visits
+	visits = int(get_server_side_cookie(request, 'visits', '1'))
+	last_visit_cookie = get_server_side_cookie(request, 'last_visit', str(datetime.now()))
+	last_visit_time = datetime.strptime(last_visit_cookie[:-7], '%Y-%m-%d %H:%M:%S')
+	
+	# If it's been more than a day since the last visit, then:
+	# increment visits counter and update time in last visit cookie
+	if (datetime.now() - last_visit_time).days > 0:
+		visits = visits + 1
+		request.session['last_visit'] = str(datetime.now())
+	
+	else:
+		# Set a new, up-to-date last visit cookie
+		request.session['last_visit'] = last_visit_cookie
+
+	# Update/set the visits cookie
+	request.session['visits'] = visits
+
 
 def index(request):
 	# Query the database for a list of ALL categories currently stored.
@@ -13,15 +42,24 @@ def index(request):
 	# Retrieve the top 5 only (or all if less than 5).
 	category_list = Category.objects.order_by('-likes')[:5]
 	pages_list = Page.objects.order_by('-views')[:5]
+
 	context_dict = {}
 	context_dict['boldmessage'] = 'Crunchy, creamy, cookie, candy, cupcake!'
 	context_dict['categories'] = category_list
 	context_dict['pages'] = pages_list
-	# Render the response and send it back!
+
+	# Update visits cookie
+	visitor_cookie_handler(request)
+
+	# Render the response and return it
 	return render(request, 'rango/index.html', context=context_dict)
 
 def about(request):
-	return render(request, 'rango/about.html')
+	# Look for visits cookie in server
+	visitor_cookie_handler(request)
+	context_dict = {'visits' : request.session['visits']}
+
+	return render(request, 'rango/about.html', context=context_dict)
 
 def show_category(request, category_name_slug):
 	context_dict = {}
