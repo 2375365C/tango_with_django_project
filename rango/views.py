@@ -4,7 +4,6 @@ from rango.models import Category, Page
 from rango.forms import CategoryForm, PageForm, UserForm, UserProfileForm
 from django.shortcuts import redirect
 from django.urls import reverse
-from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from datetime import datetime
 
@@ -130,78 +129,6 @@ def add_page(request, category_name_slug):
 
 	context_dict = {'form': form, 'category': category}
 	return render(request, 'rango/add_page.html', context=context_dict)
-
-# Register a new user
-def register(request):
-	registered = False # Boolean indicator tells if registration was successful - change to true when successfully registered
-
-	if request.method == 'POST':
-		user_form = UserForm(request.POST)
-		profile_form = UserProfileForm(request.POST)
-
-		# If the forms are valid, save form data to db.
-		if user_form.is_valid() and profile_form.is_valid():
-			user = user_form.save()
-
-			user.set_password(user.password) # Has password with pre-built Django hashing method
-			user.save()
-
-			# Delay committing until ready, save UserProfile instance
-			profile = profile_form.save(commit=False)
-			profile.user = user
-
-			if 'picture' in request.FILES:
-				profile.picture = request.FILES['picture']
-
-			profile.save()
-
-			registered = True
-
-		else:
-			print(user_form.errors, profile_form.errors)
-
-	else: # Mustn't be a HTTP POST so render our form using two blank forms
-		user_form = UserForm()
-		profile_form = UserProfileForm()
-
-	return render(
-				request,
-				'rango/register.html',
-				context = {	'user_form' : user_form,
-							'profile_form' : profile_form,
-							'registered' : registered}
-				)
-
-def user_login(request):
-	# If request is a POST, login attempt has been made
-	if request.method == 'POST':
-		username = request.POST.get('username')
-		password = request.POST.get('password')
-
- 		# Django inbuilt user/password validation
-		# returns User object if it is valid
-		user = authenticate(username=username, password=password)
-
-		if user: # true if authentication passed
-			if user.is_active: # i.e. is the user currently enabled?
-				login(request, user)
-				return redirect(reverse('rango:index'))
-
-			else:
-				return HttpResponse("Your Rango account is disabled.")
-		
-		else: # bad login details provided
-			print(f"Invalid login details: {username}, {password}")
-			return HttpResponse("Invalid login details supplied.")
-
-	# Default to treat request as a HTTP GET
-	else:
-		return render(request,'rango/login.html')
-
-@login_required
-def user_logout(request):
-	logout(request)
-	return redirect(reverse('rango:index'))
 
 @login_required
 def restricted(request):
